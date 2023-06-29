@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "auto-close-tag.insertSpaceBeforeSelfClosingTag": true,
+    "docthis.authorName": "Anthony Dombrowski"
+  }
+}
