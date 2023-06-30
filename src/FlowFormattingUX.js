@@ -23,6 +23,12 @@ const FlowFormattingUX = forwardRef(function FlowFormattingUX(
   const defaultAnimationDuration = 1;
   const maxAnimationDuration = 1000;
   const minAnimationDuration = 1;
+  const connectionDefaultWidth = 75;
+  const connectionDefaultHeight = 75;
+  const annotationDefaultWidth = 300;
+  const annotationDefaultHeight = 25;
+  const evalDefaultWidth = 75;
+  const evalDefaultHeight = 50;
   const [aniDur, setAniDur] = useState(defaultAnimationDuration);
   const [isAccordionOpen, setIsAccordionOpen] = useState(true);
   const [aniDescriptionText, setAniDescriptionText] = useState("");
@@ -228,68 +234,119 @@ const FlowFormattingUX = forwardRef(function FlowFormattingUX(
           autounselectify={true}
           stylesheet={[
             {
-              selector: '[nodeType = "CONNECTION"]',
-              style: {
-                shape: (ele) => {
-                  return "round-diamond";
-                },
+              "selector": '[nodeType = "CONNECTION"]',
+              "style": {
+                shape: "rectangle",
               },
+              "width": connectionDefaultWidth,
+              "height": connectionDefaultHeight,
+              "background-opacity": 1,
+              "background-color": (ele) => {
+                const props = ele.data("properties");
+                const bgColor = props?.backgroundColor?.value;
+
+                if (bgColor) {
+                  return bgColor.slice(0, 7);
+                }
+
+                return "#CCFBFE";
+              },
+              "background-blacken": 0,
+              "label": (ele) => {
+                const eleProps = ele.data("properties");
+                const title = eleProps?.nodeTitle?.value;
+                const name = ele.data("name");
+
+                let firstRowLabel = title || name || "connection";
+                return (
+                  (firstRowLabel ? firstRowLabel : "") +
+                  "\n" +
+                  ele.id() +
+                  "\n(" +
+                  new Intl.NumberFormat("en-US", {
+                    minimumFractionDigits: 0,
+                    useGrouping: false,
+                  }).format(ele.position("x")) +
+                  "," +
+                  new Intl.NumberFormat("en-US", {
+                    minimumFractionDigits: 0,
+                    useGrouping: false,
+                  }).format(ele.position("y")) +
+                  ")"
+                );
+              },
+              "font-size": 20,
+              "text-opacity": 1.0,
+              "text-wrap": "wrap",
+              "text-valign": "center",
+              "text-margin-y": 5,
+              "text-transform": "lowercase",
+              "text-outline-opacity": "1",
+              "text-outline-color": "#F0F66E",
+              "text-outline-width": 0.1,
+              "text-max-width": (ele) => {
+                const eleProps = ele.data("properties");
+                return eleProps?.width?.value || connectionDefaultWidth;
+              },
+              "line-height": 1.1,
+              "color": "#FFFaaa",
+              "z-index": 5,
+              "z-index-compare": "manual",
             },
             {
-              selector: '[nodeType = "ANNOTATION"]',
+              selector: '[nodeType = "EVAL"]',
               style: {
-                "shape": (ele) => {
-                  return "rectangle";
-                },
+                "shape": "round-diamond",
                 "width": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    const w = eleProps.width ? eleProps.width.value : null;
+                  const width = eleProps?.width?.value;
 
-                    if (w) {
-                      return w;
-                    }
+                  if (width) {
+                    return width;
                   }
 
-                  return 300;
+                  return evalDefaultWidth;
                 },
                 "height": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    const h = eleProps.height ? eleProps.height.value : null;
+                  const height = eleProps?.height?.value;
 
-                    if (h) {
-                      return h;
-                    }
+                  if (height) {
+                    return height;
                   }
 
-                  return 25;
+                  return evalDefaultHeight;
                 },
-                "background-opacity": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return 0.4;
-                  }
-
-                  return 1;
-                },
+                "background-opacity": 1,
                 "background-color": (ele) => {
                   const props = ele.data("properties");
-                  const readBGColor = props ? props.backgroundColor : null;
-                  if (readBGColor) {
-                    return readBGColor.value.slice(0, 7);
+                  const bgColor = props?.backgroundColor?.value;
+
+                  if (bgColor) {
+                    return bgColor.slice(0, 7);
                   }
 
-                  return "#f2f3f4";
+                  return "#ee6c4d";
                 },
-                "background-blacken": 0.05,
+                "background-blacken": 0,
                 "label": (ele) => {
                   const eleProps = ele.data("properties");
-                  return eleProps.annotation.value;
+
+                  if (eleProps) {
+                    let s = ele.id() + "\n";
+
+                    for (let p of Object.values(eleProps)) {
+                      s += p.value;
+                      s += " ";
+                    }
+
+                    return s;
+                  }
+
+                  return ele.id();
                 },
-                "font-size": (ele) => {
-                  return 15;
-                },
-                "text-opacity": 1.0 ,
+                "font-size": 12,
+                "text-opacity": 1,
                 "text-wrap": "wrap",
                 "text-valign": "center",
                 "text-margin-y": 0,
@@ -299,197 +356,70 @@ const FlowFormattingUX = forwardRef(function FlowFormattingUX(
                 "text-outline-width": 0.1,
                 "text-max-width": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    return eleProps.width ? eleProps.width.value : 200;
-                  }
+                  return eleProps?.width?.value || evalDefaultWidth;
                 },
                 "line-height": 1.1,
-                "color": "#FFFaaa",
-                "z-index": 0,
+                "color": "#FAFAFF",
+                "z-index": 1,
                 "z-index-compare": "manual",
               },
             },
             {
-              selector: '[nodeType = "EVAL"]',
+              selector: '[nodeType = "ANNOTATION"]',
               style: {
-                "shape": (ele) => {
-                  if (ele.data("nodeType") === "EVAL") {
-                    // return "rectangle";
-                    return "round-diamond";
-                  }
-                },
+                "shape": "rectangle",
                 "width": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    const w = eleProps.width ? eleProps.width.value : null;
+                  const width = eleProps?.width?.value;
 
-                    if (w) {
-                      return w;
-                    }
+                  if (width) {
+                    return width;
                   }
 
-                  if (ele.data("nodeType") === "CONNECTION") {
-                    return 75;
-                  }
-
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return ele.data("properties").width
-                      ? ele.data("properties").width.value
-                      : 300;
-                  }
-
-                  return 100;
+                  return annotationDefaultWidth;
                 },
                 "height": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    const h = eleProps.height ? eleProps.height.value : null;
+                  const height = eleProps?.height?.value;
 
-                    if (h) {
-                      return h;
-                    }
+                  if (height) {
+                    return height;
                   }
 
-                  if (ele.data("nodeType") === "CONNECTION") {
-                    return 100;
-                  }
-
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    const h = ele.data("properties").height?.value;
-                    return h ? h : 25;
-                  }
-
-                  return 75;
+                  return annotationDefaultHeight;
                 },
-                "background-opacity": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return 0.4;
-                  }
-
-                  return 1;
-                },
+                "background-opacity": 0.5,
                 "background-color": (ele) => {
                   const props = ele.data("properties");
-                  const readBGColor = props ? props.backgroundColor : null;
-                  if (readBGColor) {
-                    return readBGColor.value.slice(0, 7);
+                  const bgColor = props?.backgroundColor?.value;
+
+                  if (bgColor) {
+                    return bgColor.slice(0, 7);
                   }
 
-                  if (ele.data("nodeType") === "CONNECTION") {
-                    return "#CCFBFE";
-                  }
-
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return "#f2f3f4";
-                  }
-
-                  return "#ee6c4d";
+                  return "#f2f3f4";
                 },
-                "background-blacken": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return 0.5;
-                  }
-
-                  return 0;
-                },
+                "background-blacken": 0.25,
                 "label": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return ele.data("properties").annotation.value;
-                  }
-
                   const eleProps = ele.data("properties");
-                  if (ele.data("nodeType") === "EVAL") {
-                    if (eleProps) {
-                      let s = ele.id() + "\n";
-                      for (let p of Object.values(eleProps)) {
-                        s += p.value;
-                        s += " ";
-                      }
-                      return s;
-                    }
-
-                    return ele.id();
-                  }
-
-                  let title;
-                  if (eleProps) {
-                    title = eleProps.nodeTitle?.value;
-                  }
-
-                  const name = ele.data("name");
-
-                  let firstRowLabel = name + "\n" + title;
-                  return (
-                    (firstRowLabel ? firstRowLabel : "") +
-                    "\n" +
-                    ele.id() +
-                    "\n(" +
-                    new Intl.NumberFormat("en-US", {
-                      minimumFractionDigits: 0,
-                      useGrouping: false,
-                    }).format(ele.position("x")) +
-                    "," +
-                    new Intl.NumberFormat("en-US", {
-                      minimumFractionDigits: 0,
-                      useGrouping: false,
-                    }).format(ele.position("y")) +
-                    ")"
-                  );
+                  return eleProps?.annotation?.value || "annotation";
                 },
-                "font-size": (ele) => {
-                  if (ele.data("nodeType") === "CONNECTION") {
-                    return 20;
-                  }
-                  return 15;
-                },
-                "text-opacity": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return 0.25;
-                  }
-
-                  return 1;
-                },
+                "font-size": 15,
+                "text-opacity": 0.95,
                 "text-wrap": "wrap",
-                "text-valign": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                  }
-                  return "center";
-                  // return "bottom";
-                },
-                "text-margin-y": (ele) => {
-                  if (ele.data("nodeType") === "CONNECTION") {
-                    return 5;
-                  }
-                  return 0;
-                },
+                "text-valign": "center",
+                "text-margin-y": 0,
                 "text-transform": "lowercase",
                 "text-outline-opacity": "1",
                 "text-outline-color": "#F0F66E",
                 "text-outline-width": 0.1,
                 "text-max-width": (ele) => {
                   const eleProps = ele.data("properties");
-                  if (eleProps) {
-                    return eleProps.width ? eleProps.width.value : 200;
-                  }
+                  return eleProps?.width?.value || annotationDefaultWidth;
                 },
                 "line-height": 1.1,
-                "color": (ele) => {
-                  if (ele.data("nodeType") === "ANNOTATION") {
-                    return "#aaaaaa";
-                  }
-
-                  return "#FAFAFF";
-                },
-                "z-index": (ele) => {
-                  const nodeType = ele.data("nodeType");
-                  if (nodeType === "ANNOTATION") {
-                    return 0;
-                  } else if (nodeType === "EVALUATION") {
-                    return 1;
-                  } else {
-                    return 5;
-                  }
-                },
+                "color": "#FFFaaa",
+                "z-index": 0,
                 "z-index-compare": "manual",
               },
             },
